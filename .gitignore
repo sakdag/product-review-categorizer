@@ -1,3 +1,12 @@
+.DS_Store
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.sln
+*.sw?
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +136,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project related
+src/data/*
+
+# Exception to the rule
+!src/data/.gitkeep
