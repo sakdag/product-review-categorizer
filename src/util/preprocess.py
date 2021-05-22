@@ -1,6 +1,7 @@
 import json
 import sys
 import pandas as pd
+from datetime import datetime
 
 sys.path.append("..")
 
@@ -25,32 +26,38 @@ def read_filter_data(filepath, product_id_list):
     i = 0
     with open(filepath) as f:
         for line in f:
-            i += 1
             obj = json.loads(line)
-            if obj['asin'] in product_id_list:
+            if obj['asin'] in product_id_list and obj['verified'] and 'reviewText' in obj and len(obj['reviewText']) > 50:
+                i += 1
                 data.append(obj)
-            if i == 500000:
-                break
+                if i == 50000:
+                    break
     return data
 
 
 if __name__ == '__main__':
     # Read metadata
-    metadata = read_data(Config.ELECTRONICS_METADATA_PATH)
-    print('Total:', len(metadata))
+    # metadata = read_data(Config.ELECTRONICS_METADATA_PATH)
+    # print('Total:', len(metadata))
 
     # Filter items with categories containing 'headphone' keyword
-    headphones_metadata = [item for item in metadata if len([c for c in item['category'] if 'headphone' in c.lower()]) > 0]
-    print('Headphones:', len(headphones_metadata))
+    # headphones_metadata = [item for item in metadata if len([c for c in item['category'] if 'headphone' in c.lower()]) > 0]
+    # print('Headphones:', len(headphones_metadata))
 
-    write_data(Config.HEADPHONES_METADATA_PATH, headphones_metadata)
+    # write_data(Config.HEADPHONES_METADATA_PATH, headphones_metadata)
 
-    headphones_df = pd.read_json(Config.HEADPHONES_METADATA_PATH)
-    product_id_list = list(headphones_df['asin'].values)
+    # headphones_df = pd.read_json(Config.HEADPHONES_METADATA_PATH)
+    # product_id_list = list(headphones_df['asin'].values)
+
+    # start = datetime.now()
 
     # Read and filter reviews
-    headphones_reviews = read_filter_data(Config.ELECTRONICS_REVIEWS_PATH, product_id_list)
-    print('Total:', len(headphones_reviews))
+    # headphones_reviews = read_filter_data(Config.ELECTRONICS_REVIEWS_PATH, product_id_list)
+    # print('Total:', len(headphones_reviews))
+    # print('Time:', (datetime.now() - start).total_seconds())
 
-    write_data(Config.HEADPHONES_REVIEWS_PATH, headphones_reviews)
+    # write_data(Config.HEADPHONES_REVIEWS_PATH, headphones_reviews)
 
+    headphones_df = pd.read_json(Config.HEADPHONES_REVIEWS_PATH)
+    headphones_df = headphones_df[['asin', 'overall', 'vote', 'reviewTime', 'reviewerID', 'reviewerName', 'summary', 'reviewText']]
+    headphones_df.to_csv(Config.HEADPHONES_REVIEWS_CSV_PATH, index=False)
