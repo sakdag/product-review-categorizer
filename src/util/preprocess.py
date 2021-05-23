@@ -1,11 +1,10 @@
 import json
 import sys
 import pandas as pd
-from datetime import datetime
 
 sys.path.append("..")
 
-from config.config import Config
+from src.config.config import Config
 
 
 def read_data(filepath):
