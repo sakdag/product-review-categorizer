@@ -21,43 +21,54 @@ def preprocess_and_save(df: pd.DataFrame, lemmatizer, preprocessed_file_name: st
 
     for index, row in df.iterrows():
         sentences = tokenize.sent_tokenize(row['reviewText'])
-        review_chunks_as_string = ''
 
-        for sentence in sentences:
-            chunked = chunk_func(pos_tag(word_tokenize(sentence)))
-            review_chunks = []
-            current_chunk = []
-
-            for subtree in chunked:
-                if type(subtree) == Tree:
-                    current_chunk.append(" ".join([token for token, pos in subtree.leaves()]))
-                elif current_chunk:
-                    named_entity = " ".join(current_chunk)
-                    if named_entity not in review_chunks:
-
-                        # Found a noun phrase, preprocess it and add to noun phrases
-                        # of this review
-                        named_entity = named_entity.lower()
-                        new_entity = ''
-                        for token in word_tokenize(named_entity):
-                            if token not in stop:
-                                token = lemmatizer.lemmatize(token)
-                                if new_entity != '':
-                                    new_entity += ' '
-                                new_entity += token
-                        if new_entity != '':
-                            if review_chunks_as_string != '':
-                                review_chunks_as_string += ','
-                            review_chunks_as_string += new_entity
-                            # review_chunks.append(new_entity)
-                        current_chunk = []
-                else:
-                    continue
+        review_chunks_as_string = process_review(sentences, chunk_func, stop)
 
         df.loc[index, 'preprocessedReviewChunks'] = review_chunks_as_string
 
     # Save
     df.to_csv(preprocessed_file_name, index_label='reviewId')
+
+
+def process_review(sentences: list, chunk_func, stop):
+    review_chunks_as_string = ''
+
+    for sentence in sentences:
+        chunked = chunk_func(pos_tag(word_tokenize(sentence)))
+        review_chunks = []
+        current_chunk = []
+
+        for subtree in chunked:
+            if type(subtree) == Tree:
+                current_chunk.append(" ".join([token for token, pos in subtree.leaves()]))
+            elif current_chunk:
+                named_entity = " ".join(current_chunk)
+
+                if named_entity not in review_chunks:
+                    review_chunks_as_string = process_found_named_entity(named_entity, stop, review_chunks_as_string)
+                    current_chunk = []
+            else:
+                continue
+
+    return review_chunks_as_string
+
+
+# Found a noun phrase, preprocess it and add to noun phrases
+# of this review
+def process_found_named_entity(named_entity, stop, review_chunks_as_string):
+    named_entity = named_entity.lower()
+    new_entity = ''
+    for token in word_tokenize(named_entity):
+        if token not in stop:
+            token = lemmatizer.lemmatize(token)
+            if new_entity != '':
+                new_entity += ' '
+            new_entity += token
+    if new_entity != '':
+        if review_chunks_as_string != '':
+            review_chunks_as_string += ','
+        review_chunks_as_string += new_entity
+    return review_chunks_as_string
 
 
 if __name__ == '__main__':
