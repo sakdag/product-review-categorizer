@@ -71,12 +71,33 @@ def process_found_named_entity(named_entity, stop, review_chunks_as_string):
     return review_chunks_as_string
 
 
+def save_most_popular_phrases(threshold: int, file_name: str):
+    token_count_dict = dict()
+    for index, row in df.iterrows():
+        splits = str(row['preprocessedReviewChunks']).split(',')
+        for chunk in splits:
+            if chunk in token_count_dict.keys():
+                token_count_dict[chunk] += 1
+            else:
+                token_count_dict[chunk] = 1
+
+    filtered_dict = dict()
+    for key in token_count_dict.keys():
+        if token_count_dict[key] > threshold:
+            filtered_dict[key] = token_count_dict[key]
+
+    f = open(file_name, "w")
+    for element in sorted(filtered_dict.items(), key=lambda kv: kv[1], reverse=True):
+        f.write(str(str(element[0]) + ':' + str(element[1]) + '\n'))
+    f.close()
+
+
 if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     review_dataset_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_CSV_PATH)
     preprocessed_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
 
-    df = cu.read_dataset(review_dataset_file_name)
+    df = cu.read_dataset(preprocessed_file_name)
 
     nltk.download('stopwords')
     nltk.download('wordnet')
@@ -85,3 +106,6 @@ if __name__ == '__main__':
     lemmatizer = WordNetLemmatizer()
 
     preprocess_and_save(df, lemmatizer, preprocessed_file_name)
+
+    popular_phrases_file_name = os.path.join(dirname, Config.POPULAR_PHRASES_TXT_PATH)
+    save_most_popular_phrases(50, popular_phrases_file_name)
