@@ -1,3 +1,4 @@
+import copy
 import os.path
 from sys import argv
 
@@ -30,8 +31,7 @@ def search_for(inverted_index, query_phrases: list):
 
     q = qp.parse(query_as_string)
 
-    with ix.searcher() as searcher:
-        return searcher.search(q)
+    return inverted_index.searcher().search(q)
 
 
 if __name__ == '__main__':

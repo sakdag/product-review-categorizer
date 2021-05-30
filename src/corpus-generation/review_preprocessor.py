@@ -1,6 +1,7 @@
 import os
 
 import nltk as nltk
+import numpy as np
 import pandas as pd
 from nltk import tokenize, RegexpParser, pos_tag, word_tokenize, Tree
 from nltk.corpus import stopwords
@@ -26,6 +27,8 @@ def preprocess_and_save(df: pd.DataFrame, lemmatizer, preprocessed_file_name: st
         df.loc[index, 'preprocessedReviewChunks'] = review_chunks_as_string
 
     # Save
+    df.replace('', np.NaN, inplace=True)
+    df.dropna(subset=['preprocessedReviewChunks'], inplace=True)
     df.to_csv(preprocessed_file_name, index_label='reviewId')
 
 
