@@ -1,17 +1,16 @@
 import os
+
 import nltk as nltk
-import numpy as np
+import pandas as pd
 from nltk import tokenize, RegexpParser, pos_tag, word_tokenize, Tree
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-from sklearn.feature_extraction.text import CountVectorizer
 
-import pandas as pd
-from src.util import categorizer_utils as cu
 from src.config.config import Config
+from src.util import categorizer_utils as cu
 
 # Defining a grammar & Parser
-NP = "NP: {(<V\w+>|<NN\w?>)+.*<NN\w?>}"
+NP = "NP: {(<VBD\w?>|<NNP\w?>|<NNPS\w?>|<NN\w?>)+.*(<VBG\w?>|<NNP\w?>|<NNPS\w?>|<NN\w?>)}"
 chunker = RegexpParser(NP)
 
 
@@ -71,15 +70,18 @@ def process_found_named_entity(named_entity, stop, review_chunks_as_string):
     return review_chunks_as_string
 
 
-def save_most_popular_phrases(threshold: int, file_name: str):
+def save_most_popular_phrases(df: pd.DataFrame, threshold: int, file_name: str):
     token_count_dict = dict()
     for index, row in df.iterrows():
-        splits = str(row['preprocessedReviewChunks']).split(',')
-        for chunk in splits:
-            if chunk in token_count_dict.keys():
-                token_count_dict[chunk] += 1
-            else:
-                token_count_dict[chunk] = 1
+        if row['preprocessedReviewChunks'] != '':
+            splits = str(row['preprocessedReviewChunks']).split(',')
+            for chunk in splits:
+                # Filter phrases of 2 length (exclude phrases containing head and phone words)
+                if len(chunk.split(' ')) == 2 and ('head' not in chunk and 'phone' not in chunk):
+                    if chunk in token_count_dict.keys():
+                        token_count_dict[chunk] += 1
+                    else:
+                        token_count_dict[chunk] = 1
 
     filtered_dict = dict()
     for key in token_count_dict.keys():
@@ -97,7 +99,7 @@ if __name__ == '__main__':
     review_dataset_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_CSV_PATH)
     preprocessed_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
 
-    df = cu.read_dataset(preprocessed_file_name)
+    df = cu.read_dataset(review_dataset_file_name)
 
     nltk.download('stopwords')
     nltk.download('wordnet')
@@ -108,4 +110,4 @@ if __name__ == '__main__':
     preprocess_and_save(df, lemmatizer, preprocessed_file_name)
 
     popular_phrases_file_name = os.path.join(dirname, Config.POPULAR_PHRASES_TXT_PATH)
-    save_most_popular_phrases(50, popular_phrases_file_name)
+    save_most_popular_phrases(df, 50, popular_phrases_file_name)
