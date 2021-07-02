@@ -9,9 +9,10 @@ from whoosh import index
 from src.config.config import Config
 from src.search import phrase_search
 from src.util import categorizer_utils
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route("/headphones/phrases", methods=['GET'])
 def get_phrases():
