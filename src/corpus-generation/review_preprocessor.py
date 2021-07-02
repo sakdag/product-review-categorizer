@@ -110,12 +110,19 @@ def save_most_popular_phrases(df: pd.DataFrame, threshold: int, file_name: str):
     f.close()
 
 
+# Preprocessing steps:
+# For each review in dataset:
+# - Lemmatize each word and save this version of the reviews
+# - For each sentence find named entities
+#   - For each named entity
+#     - Remove stopwords and lemmatize the named entity
+#   Save each of these chunks as concatenated string separated by comma.
 if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     review_dataset_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_CSV_PATH)
-    preprocessed_file_name = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
+    preprocessed_file_path = os.path.join(dirname, '../data/', Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
 
-    df = cu.read_dataset(review_dataset_file_name)
+    reviews_df = cu.read_dataset(review_dataset_file_name)
 
     nltk.download('stopwords')
     nltk.download('wordnet')
@@ -123,7 +130,7 @@ if __name__ == '__main__':
     nltk.download('averaged_perceptron_tagger')
     lemmatizer = WordNetLemmatizer()
 
-    preprocess_and_save(df, lemmatizer, preprocessed_file_name)
+    preprocess_and_save(reviews_df, lemmatizer, preprocessed_file_path)
 
     popular_phrases_file_name = os.path.join(dirname, Config.POPULAR_PHRASES_TXT_PATH)
-    save_most_popular_phrases(df, 50, popular_phrases_file_name)
+    save_most_popular_phrases(reviews_df, 50, popular_phrases_file_name)

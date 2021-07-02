@@ -1,3 +1,4 @@
+import json
 import string
 
 from nltk import word_tokenize
@@ -42,3 +43,6 @@ class SearchResult:
                 highlight -= 1
         result += '\n'
         return result
+
+    def get_json_representation(self):
+        return json.dumps(self.__dict__)
