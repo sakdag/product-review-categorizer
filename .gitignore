@@ -142,3 +142,4 @@ src/data/*
 
 # Exception to the rule
 !src/data/.gitkeep
+/src/index/

@@ -1,4 +1,5 @@
 import os
+import string
 
 import nltk as nltk
 import numpy as np
@@ -20,10 +21,22 @@ def preprocess_and_save(df: pd.DataFrame, lemmatizer, preprocessed_file_name: st
     stop = stopwords.words('english')
 
     for index, row in df.iterrows():
+
+        # Get lemmatized version of the review and save
+        lemmatized_review = ''
+        for token in word_tokenize(row['reviewText']):
+            if token not in string.punctuation:
+                if lemmatized_review != '':
+                    lemmatized_review += ' '
+                lemmatized_review += lemmatizer.lemmatize(token)
+            else:
+                lemmatized_review += token
+        df.loc[index, 'lemmatizedReview'] = lemmatized_review
+
+        # Generate review chunks and save
         sentences = tokenize.sent_tokenize(row['reviewText'])
 
         review_chunks_as_string = process_review(sentences, chunk_func, stop)
-
         df.loc[index, 'preprocessedReviewChunks'] = review_chunks_as_string
 
     # Save

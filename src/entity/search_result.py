@@ -1,3 +1,5 @@
+import string
+
 from nltk import word_tokenize
 
 WARNING = '\033[93m'
@@ -18,7 +20,7 @@ class SearchResult:
         self.highlight_indices = highlight_indices
 
     def __str__(self):
-        result = 'Review: ' + str(self.review_id)
+        result = 'Review Id: ' + str(self.review_id)
         result += ' with score: ' + str(self.ranking_score)
         result += ' for product: ' + self.product_id + '\n'
         review_tokens = word_tokenize(self.review_text)
@@ -29,11 +31,13 @@ class SearchResult:
                     highlight = 2
                     result += WARNING
                     for j in range(highlight_index[1]):
-                        result += review_tokens[i] + ' '
+                        result += ' ' + review_tokens[i]
                         i += 1
                     result += ENDC
             if highlight == 0:
-                result += review_tokens[i] + ' '
+                if review_tokens[i] not in string.punctuation:
+                    result += ' '
+                result += review_tokens[i]
             else:
                 highlight -= 1
         result += '\n'

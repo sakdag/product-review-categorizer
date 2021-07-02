@@ -19,14 +19,14 @@ def add_documents_to_index(df: pd.DataFrame, ix):
     for df_index, row in df.iterrows():
         writer.add_document(reviewId=row['reviewId'],
                             review=row['reviewText'],
-                            reviewChunks=row['preprocessedReviewChunks'],
+                            lemmatizedReview=row['lemmatizedReview'],
                             productId=row['asin'])
 
     writer.commit()
 
 
 def search_for(inverted_index, query_phrases: list):
-    qp = QueryParser("reviewChunks", schema=inverted_index.schema)
+    qp = QueryParser("lemmatizedReview", schema=inverted_index.schema)
 
     query_as_string = ''
     for phrase in query_phrases:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         schema = Schema(reviewId=NUMERIC(stored=True),
                         review=TEXT(stored=True),
                         productId=TEXT(stored=True),
-                        reviewChunks=TEXT(stored=True))
+                        lemmatizedReview=TEXT(stored=True))
 
         # Create index
         ix = index.create_in(index_dir, schema=schema)
