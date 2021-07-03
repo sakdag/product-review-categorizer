@@ -33,9 +33,11 @@ def search():
     for phrase in phrases.split(','):
         phrases_to_query.append(phrase)
 
-    limit = int(request.args.get('limit'))
+    limit = request.args.get('limit')
     if limit is None:
         limit = 10
+    else:
+        limit = int(limit)
 
     return generate_search_results(phrases_to_query, limit)
 
