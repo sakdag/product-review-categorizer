@@ -6,6 +6,7 @@ from flask import Flask, request
 from nltk import WordNetLemmatizer
 from spellchecker import SpellChecker
 from whoosh import index
+from whoosh.qparser import QueryParser
 
 from src.config.config import Config
 from src.search import phrase_search
@@ -32,11 +33,15 @@ def search():
     for phrase in phrases.split(','):
         phrases_to_query.append(phrase)
 
-    return generate_search_results(phrases_to_query)
+    limit = int(request.args.get('limit'))
+    if limit is None:
+        limit = 10
+
+    return generate_search_results(phrases_to_query, limit)
 
 
-def generate_search_results(phrases_to_query: list):
-    results = phrase_search.search_for(ix, phrases_to_query)
+def generate_search_results(phrases_to_query: list, limit: int):
+    results = phrase_search.search_for(ix, qp, phrases_to_query, limit)
     highlighted_results = phrase_search.highlight_search_terms(results, phrases_to_query, lemmatizer,
                                                                punctuation_regex, spell)
 
@@ -61,5 +66,6 @@ if __name__ == '__main__':
 
     # Read whoosh index
     ix = index.open_dir(index_dir)
+    qp = QueryParser("lemmatizedReview", schema=ix.schema)
 
     app.run(debug=True, use_reloader=False)

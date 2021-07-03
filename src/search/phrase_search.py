@@ -1,5 +1,6 @@
 import os.path
 import re
+import string
 from sys import argv
 
 import pandas as pd
@@ -26,8 +27,7 @@ def add_documents_to_index(df: pd.DataFrame, ix):
     writer.commit()
 
 
-def search_for(inverted_index, query_phrases: list):
-    qp = QueryParser("lemmatizedReview", schema=inverted_index.schema)
+def search_for(inverted_index, qp, query_phrases: list, result_limit: int = 10):
 
     query_as_string = ''
     for phrase in query_phrases:
@@ -35,7 +35,7 @@ def search_for(inverted_index, query_phrases: list):
 
     q = qp.parse(query_as_string)
 
-    return inverted_index.searcher().search(q)
+    return inverted_index.searcher().search(q, limit=result_limit)
 
 
 # Following method assumes that both tokens and query phrases are of 2 words in size
@@ -61,19 +61,29 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
         for token_index, token in enumerate(word_tokenize(review_text)):
             token = token.lower()
 
-            # Is token combination of symbols only
-            if punctuation_regex.match(token) is None:
-
-                # Correct if token is misspelled
-                misspelled = spell.unknown([token])
-                if len(misspelled) > 0:
-                    token = spell.correction(list(misspelled)[0])
+            # Fast version, misses misspelled highlights
+            if token not in string.punctuation:
 
                 # Lemmatize the token
                 token = lemmatizer.lemmatize(token)
 
                 processed_result_tokens.append(token)
                 token_indices.append(token_index)
+
+            # # Slow version, finds all highlights
+            # # Is token combination of symbols only
+            # if punctuation_regex.match(token) is None:
+            #
+            #     # Correct if token is misspelled
+            #     misspelled = spell.unknown([token])
+            #     if len(misspelled) > 0:
+            #         token = spell.correction(list(misspelled)[0])
+            #
+            #     # Lemmatize the token
+            #     token = lemmatizer.lemmatize(token)
+            #
+            #     processed_result_tokens.append(token)
+            #     token_indices.append(token_index)
 
         highlight_indices = []
         num_of_tokens = len(processed_result_tokens)
@@ -132,9 +142,10 @@ if __name__ == '__main__':
 
     else:
         ix = index.open_dir(index_dir)
+        qp = QueryParser("lemmatizedReview", schema=ix.schema)
 
         phrases_to_query = ['sound quality', 'volume control']
-        results = search_for(ix, phrases_to_query)
+        results = search_for(ix, qp, phrases_to_query)
 
         lemmatizer = WordNetLemmatizer()
         search_results = highlight_search_terms(results, phrases_to_query, lemmatizer,
