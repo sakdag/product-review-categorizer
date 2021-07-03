@@ -1,9 +1,10 @@
 import json
 import os
+import re
 
 from flask import Flask, request
 from nltk import WordNetLemmatizer
-from nltk.corpus import stopwords
+from spellchecker import SpellChecker
 from whoosh import index
 
 from src.config.config import Config
@@ -36,7 +37,8 @@ def search():
 
 def generate_search_results(phrases_to_query: list):
     results = phrase_search.search_for(ix, phrases_to_query)
-    highlighted_results = phrase_search.highlight_search_terms(results, phrases_to_query, stop, lemmatizer)
+    highlighted_results = phrase_search.highlight_search_terms(results, phrases_to_query, lemmatizer,
+                                                               punctuation_regex, spell)
 
     json_result_list = list()
     for result in highlighted_results:
@@ -53,8 +55,10 @@ if __name__ == '__main__':
     # Get popular phrases from the file
     popular_phrases_json = categorizer_utils.read_popular_phrases(review_dataset_file_name)
 
-    stop = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
+    punctuation_regex = re.compile(r'(([^\w\s])+)')
+    spell = SpellChecker()
+
     # Read whoosh index
     ix = index.open_dir(index_dir)
 

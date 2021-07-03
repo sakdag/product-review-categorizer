@@ -1,9 +1,10 @@
 import os.path
+import re
 from sys import argv
 
 import pandas as pd
 from nltk import word_tokenize, WordNetLemmatizer
-from nltk.corpus import stopwords
+from spellchecker import SpellChecker
 from whoosh.fields import Schema, TEXT, NUMERIC
 from whoosh import index
 from whoosh.qparser import QueryParser
@@ -48,26 +49,55 @@ def search_for(inverted_index, query_phrases: list):
 # .
 # .
 # (Highlight index, number of words to highlight))
-def highlight_search_terms(results, query_phrases: list, stop, lemmatizer):
+def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation_regex, spell):
     modified_search_results = []
+
     for current_result in results:
         review_text = current_result['review']
         processed_result_tokens = []
         token_indices = []
+
+        # Iterate over tokens to find where to highlight
         for token_index, token in enumerate(word_tokenize(review_text)):
             token = token.lower()
-            if token not in stop:
+
+            # Is token combination of symbols only
+            if punctuation_regex.match(token) is None:
+
+                # Correct if token is misspelled
+                misspelled = spell.unknown([token])
+                if len(misspelled) > 0:
+                    token = spell.correction(list(misspelled)[0])
+
+                # Lemmatize the token
                 token = lemmatizer.lemmatize(token)
+
                 processed_result_tokens.append(token)
                 token_indices.append(token_index)
+
         highlight_indices = []
         num_of_tokens = len(processed_result_tokens)
+
+        # For every token in processed tokens, check if phrase matches, if so,
+        # calculate where to highlight in raw review.
         for i in range(num_of_tokens):
             for query_phrase in query_phrases:
-                if query_phrase.startswith(processed_result_tokens[i]) \
-                        and i < num_of_tokens - 1 \
-                        and query_phrase.endswith(processed_result_tokens[i + 1]):
+
+                # Check for both original query phrase, and the one where tokens in
+                # query phrase is swapped.
+                matches_original_phrase = query_phrase.startswith(processed_result_tokens[i]) \
+                    and i < num_of_tokens - 1 \
+                    and query_phrase.endswith(processed_result_tokens[i + 1])
+
+                query_phrase_tokens = query_phrase.split(' ')
+                swapped_query_phrase = query_phrase_tokens[1] + ' ' + query_phrase_tokens[0]
+                matches_swapped_phrase = swapped_query_phrase.startswith(processed_result_tokens[i]) \
+                    and i < num_of_tokens - 1 \
+                    and swapped_query_phrase.endswith(processed_result_tokens[i + 1])
+
+                if matches_original_phrase or matches_swapped_phrase:
                     highlight_indices.append((token_indices[i], 2))
+
         modified_search_results.append(SearchResult(
             current_result['reviewId'],
             review_text,
@@ -82,6 +112,8 @@ def highlight_search_terms(results, query_phrases: list, stop, lemmatizer):
 if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     index_dir = os.path.join(dirname, Config.INDEX_PATH)
+    punctuation_regex = re.compile(r'(([^\w\s])+)')
+    spell = SpellChecker()
 
     if len(argv) == 2 and argv[1] == 'createIndex':
         preprocessed_file_name = os.path.join(dirname, Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
@@ -104,9 +136,9 @@ if __name__ == '__main__':
         phrases_to_query = ['sound quality', 'volume control']
         results = search_for(ix, phrases_to_query)
 
-        stop = stopwords.words('english')
         lemmatizer = WordNetLemmatizer()
-        search_results = highlight_search_terms(results, phrases_to_query, stop, lemmatizer)
+        search_results = highlight_search_terms(results, phrases_to_query, lemmatizer,
+                                                punctuation_regex, spell)
 
         for result in search_results:
             print(result)
