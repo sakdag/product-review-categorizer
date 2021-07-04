@@ -5,7 +5,7 @@ import re
 from flask import Flask, request
 from nltk import WordNetLemmatizer
 from spellchecker import SpellChecker
-from whoosh import index
+from whoosh import index, qparser
 from whoosh.qparser import QueryParser
 
 from src.config.config import Config
@@ -15,6 +15,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route("/headphones/phrases", methods=['GET'])
 def get_phrases():
@@ -68,6 +69,7 @@ if __name__ == '__main__':
 
     # Read whoosh index
     ix = index.open_dir(index_dir)
-    qp = QueryParser("lemmatizedReview", schema=ix.schema)
+    og = qparser.OrGroup.factory(0.9)
+    qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
 
     app.run(debug=True, use_reloader=False)

@@ -7,7 +7,7 @@ import pandas as pd
 from nltk import word_tokenize, WordNetLemmatizer
 from spellchecker import SpellChecker
 from whoosh.fields import Schema, TEXT, NUMERIC
-from whoosh import index
+from whoosh import index, qparser
 from whoosh.qparser import QueryParser
 
 import src.util.categorizer_utils as cu
@@ -142,10 +142,12 @@ if __name__ == '__main__':
 
     else:
         ix = index.open_dir(index_dir)
-        qp = QueryParser("lemmatizedReview", schema=ix.schema)
+
+        og = qparser.OrGroup.factory(0.9)
+        qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
 
         phrases_to_query = ['sound quality', 'volume control']
-        results = search_for(ix, qp, phrases_to_query)
+        results = search_for(ix, qp, phrases_to_query, result_limit=20)
 
         lemmatizer = WordNetLemmatizer()
         search_results = highlight_search_terms(results, phrases_to_query, lemmatizer,
