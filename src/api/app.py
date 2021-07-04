@@ -28,13 +28,14 @@ def search():
 
     if request.method == 'GET':
         phrases = request.args.get('phrases')
+        limit = request.args.get('limit')
     else:
         phrases = request.json['phrases']
+        limit = request.json['limit']
 
     for phrase in phrases.split(','):
         phrases_to_query.append(phrase)
 
-    limit = request.args.get('limit')
     if limit is None:
         limit = 10
     else:
