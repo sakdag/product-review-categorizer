@@ -29,9 +29,11 @@ def search():
     if request.method == 'GET':
         phrases = request.args.get('phrases')
         limit = request.args.get('limit')
+        parser_type = request.args.get('parser_type')
     else:
         phrases = request.json['phrases']
         limit = request.json['limit']
+        parser_type = request.json['parser_type']
 
     for phrase in phrases.split(','):
         phrases_to_query.append(phrase)
@@ -41,10 +43,18 @@ def search():
     else:
         limit = int(limit)
 
-    return generate_search_results(phrases_to_query, limit)
+    if parser_type is None:
+        parser_type = 'or_type'
+
+    return generate_search_results(phrases_to_query, limit, parser_type)
 
 
-def generate_search_results(phrases_to_query: list, limit: int):
+def generate_search_results(phrases_to_query: list, limit: int, parser_type: str):
+    if parser_type == 'and_type':
+        qp = default_qp
+    else:
+        qp = or_qp
+
     results = phrase_search.search_for(ix, qp, phrases_to_query, limit)
     highlighted_results = phrase_search.highlight_search_terms(results, phrases_to_query, lemmatizer,
                                                                punctuation_regex, spell)
@@ -71,6 +81,8 @@ if __name__ == '__main__':
     # Read whoosh index
     ix = index.open_dir(index_dir)
     og = qparser.OrGroup.factory(0.9)
-    qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
+
+    default_qp = QueryParser("lemmatizedReview", schema=ix.schema)
+    or_qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
 
     app.run(debug=True, use_reloader=False)

@@ -28,7 +28,6 @@ def add_documents_to_index(df: pd.DataFrame, ix):
 
 
 def search_for(inverted_index, qp, query_phrases: list, result_limit: int = 10):
-
     query_as_string = ''
     for phrase in query_phrases:
         query_as_string = query_as_string + '"' + phrase + '"'
@@ -59,17 +58,22 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
 
         latest_position = 0
         # Iterate over tokens to find where to highlight
-        for token_index, token in enumerate(word_tokenize(review_text)):
+        for token in word_tokenize(review_text):
             # Get start and end position of the token
-            start_pos = review_text.index(token, latest_position)
-            end_pos = start_pos + len(token)
-            latest_position = end_pos
+            print(token)
+            try:
+                start_pos = review_text.index(token, latest_position)
+                end_pos = start_pos + len(token)
+                latest_position = end_pos
+            except:
+                start_pos = -1
+                end_pos = -1
+                latest_position += len(token)
 
             token = token.lower()
 
             # Fast version, misses misspelled highlights
             if token not in string.punctuation:
-
                 # Lemmatize the token
                 token = lemmatizer.lemmatize(token)
 
@@ -102,14 +106,14 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
                 # Check for both original query phrase, and the one where tokens in
                 # query phrase is swapped.
                 matches_original_phrase = query_phrase.startswith(processed_result_tokens[i]) \
-                    and i < num_of_tokens - 1 \
-                    and query_phrase.endswith(processed_result_tokens[i + 1])
+                                          and i < num_of_tokens - 1 \
+                                          and query_phrase.endswith(processed_result_tokens[i + 1])
 
                 query_phrase_tokens = query_phrase.split(' ')
                 swapped_query_phrase = query_phrase_tokens[1] + ' ' + query_phrase_tokens[0]
                 matches_swapped_phrase = swapped_query_phrase.startswith(processed_result_tokens[i]) \
-                    and i < num_of_tokens - 1 \
-                    and swapped_query_phrase.endswith(processed_result_tokens[i + 1])
+                                         and i < num_of_tokens - 1 \
+                                         and swapped_query_phrase.endswith(processed_result_tokens[i + 1])
 
                 if matches_original_phrase or matches_swapped_phrase:
                     highlight_indices.append((token_indices[i][0], token_indices[i + 1][1]))
@@ -152,7 +156,7 @@ if __name__ == '__main__':
         og = qparser.OrGroup.factory(0.9)
         qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
 
-        phrases_to_query = ['sound quality', 'volume control']
+        phrases_to_query = ['sound quality', 'volume control', 'volume level']
         results = search_for(ix, qp, phrases_to_query, result_limit=20)
 
         lemmatizer = WordNetLemmatizer()
