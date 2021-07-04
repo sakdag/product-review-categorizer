@@ -57,8 +57,14 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
         processed_result_tokens = []
         token_indices = []
 
+        latest_position = 0
         # Iterate over tokens to find where to highlight
         for token_index, token in enumerate(word_tokenize(review_text)):
+            # Get start and end position of the token
+            start_pos = review_text.index(token, latest_position)
+            end_pos = start_pos + len(token)
+            latest_position = end_pos
+
             token = token.lower()
 
             # Fast version, misses misspelled highlights
@@ -68,7 +74,7 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
                 token = lemmatizer.lemmatize(token)
 
                 processed_result_tokens.append(token)
-                token_indices.append(token_index)
+                token_indices.append((start_pos, end_pos))
 
             # # Slow version, finds all highlights
             # # Is token combination of symbols only
@@ -106,7 +112,7 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
                     and swapped_query_phrase.endswith(processed_result_tokens[i + 1])
 
                 if matches_original_phrase or matches_swapped_phrase:
-                    highlight_indices.append((token_indices[i], 2))
+                    highlight_indices.append((token_indices[i][0], token_indices[i + 1][1]))
 
         modified_search_results.append(SearchResult(
             current_result['reviewId'],

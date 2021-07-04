@@ -24,24 +24,15 @@ class SearchResult:
         result = 'Review Id: ' + str(self.review_id)
         result += ' with score: ' + str(self.ranking_score)
         result += ' for product: ' + self.product_id + '\n'
-        review_tokens = word_tokenize(self.review_text)
-        highlight = 0
-        for i in range(len(review_tokens)):
-            for highlight_index in self.highlight_indices:
-                if highlight_index[0] == i:
-                    highlight = 2
-                    result += WARNING
-                    for j in range(highlight_index[1]):
-                        result += ' ' + review_tokens[i]
-                        i += 1
-                    result += ENDC
-            if highlight == 0:
-                if review_tokens[i] not in string.punctuation:
-                    result += ' '
-                result += review_tokens[i]
-            else:
-                highlight -= 1
-        result += '\n'
+
+        extra_index = 0
+        current_review = self.review_text
+        for index in self.highlight_indices:
+            current_review = current_review[:index[0] + extra_index] + WARNING + current_review[index[0] + extra_index:]
+            extra_index += len(WARNING)
+            current_review = current_review[:index[1] + extra_index] + ENDC + current_review[index[1] + extra_index:]
+            extra_index += len(ENDC)
+        result += current_review + '\n'
         return result
 
     def get_json_representation(self):
