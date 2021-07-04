@@ -60,7 +60,6 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
         # Iterate over tokens to find where to highlight
         for token in word_tokenize(review_text):
             # Get start and end position of the token
-            print(token)
             try:
                 start_pos = review_text.index(token, latest_position)
                 end_pos = start_pos + len(token)
