@@ -13,11 +13,17 @@ class SearchResult:
                  review_text: str,
                  product_id: str,
                  ranking_score: float,
+                 overall: int,
+                 title: str,
+                 image: str,
                  highlight_indices: []):
         self.review_id = review_id
         self.review_text = review_text
         self.product_id = product_id
         self.ranking_score = ranking_score
+        self.overall = overall
+        self.title = title
+        self.image = image
         self.highlight_indices = highlight_indices
 
     def __str__(self):

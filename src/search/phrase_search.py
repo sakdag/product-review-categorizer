@@ -22,7 +22,10 @@ def add_documents_to_index(df: pd.DataFrame, ix):
         writer.add_document(reviewId=row['reviewId'],
                             review=row['reviewText'],
                             lemmatizedReview=row['lemmatizedReview'],
-                            productId=row['asin'])
+                            productId=row['asin'],
+                            overall=row['overall'],
+                            title=row['title'],
+                            image=row['image'])
 
     writer.commit()
 
@@ -122,6 +125,9 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
             review_text,
             current_result['productId'],
             current_result.score,
+            current_result['overall'],
+            current_result['title'],
+            current_result['image'],
             highlight_indices
         ))
 
@@ -143,7 +149,10 @@ if __name__ == '__main__':
         schema = Schema(reviewId=NUMERIC(stored=True),
                         review=TEXT(stored=True),
                         productId=TEXT(stored=True),
-                        lemmatizedReview=TEXT(stored=True))
+                        lemmatizedReview=TEXT(stored=True),
+                        overall=NUMERIC(stored=True),
+                        title=TEXT(stored=True),
+                        image=TEXT(stored=True))
 
         # Create index
         ix = index.create_in(index_dir, schema=schema)
