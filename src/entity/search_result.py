@@ -38,7 +38,9 @@ class SearchResult:
             extra_index += len(WARNING)
             current_review = current_review[:index[1] + extra_index] + ENDC + current_review[index[1] + extra_index:]
             extra_index += len(ENDC)
-        result += current_review + '\n'
+
+        result += current_review
+        result += '\n------------------------------------------------------------------'
         return result
 
     def get_json_representation(self):

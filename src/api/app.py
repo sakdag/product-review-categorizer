@@ -8,9 +8,9 @@ from spellchecker import SpellChecker
 from whoosh import index, qparser
 from whoosh.qparser import QueryParser
 
-from src.config.config import Config
-from src.search import phrase_search
-from src.util import categorizer_utils
+import src.config.config as conf
+import src.search.phrase_search as phrase_search
+import src.utils.categorizer_utils as categorizer_utils
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -68,8 +68,8 @@ def generate_search_results(phrases_to_query: list, limit: int, parser_type: str
 
 if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
-    review_dataset_file_name = os.path.join(dirname, '../data/', Config.POPULAR_PHRASES_TXT_PATH)
-    index_dir = os.path.join(dirname, Config.INDEX_PATH)
+    review_dataset_file_name = os.path.join(dirname, conf.POPULAR_PHRASES_TXT_PATH)
+    index_dir = os.path.join(dirname, conf.INDEX_PATH)
 
     # Get popular phrases from the file
     popular_phrases_json = categorizer_utils.read_popular_phrases(review_dataset_file_name)

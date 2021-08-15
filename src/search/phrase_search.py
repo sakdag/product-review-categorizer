@@ -1,7 +1,7 @@
+import argparse
 import os.path
 import re
 import string
-from sys import argv
 
 import pandas as pd
 from nltk import word_tokenize, WordNetLemmatizer
@@ -10,8 +10,9 @@ from whoosh.fields import Schema, TEXT, NUMERIC
 from whoosh import index, qparser
 from whoosh.qparser import QueryParser
 
-import src.util.categorizer_utils as cu
-from src.config.config import Config
+import src.utils.categorizer_utils as cu
+import src.config.config as conf
+
 from src.entity.search_result import SearchResult
 
 
@@ -136,12 +137,22 @@ def highlight_search_terms(results, query_phrases: list, lemmatizer, punctuation
 
 if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
-    index_dir = os.path.join(dirname, Config.INDEX_PATH)
+    index_dir = os.path.join(dirname, conf.INDEX_PATH)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode',
+                        help='mode to use, default: create_index. Possible values:'
+                             'create_index, search')
+    parser.add_argument('--index_dir',
+                        default=index_dir,
+                        help='Directory for Whoosh index to use, default: {path to project}/index')
+    parser_args = parser.parse_args()
+
     punctuation_regex = re.compile(r'(([^\w\s])+)')
     spell = SpellChecker()
 
-    if len(argv) == 2 and argv[1] == 'createIndex':
-        preprocessed_file_name = os.path.join(dirname, Config.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
+    if parser_args.mode == 'create_index':
+        preprocessed_file_name = os.path.join(dirname, conf.HEADPHONES_REVIEWS_PREPROCESSED_CSV_PATH)
 
         df = cu.read_dataset(preprocessed_file_name)
 
@@ -155,16 +166,16 @@ if __name__ == '__main__':
                         image=TEXT(stored=True))
 
         # Create index
-        ix = index.create_in(index_dir, schema=schema)
+        ix = index.create_in(parser_args.index_dir, schema=schema)
         add_documents_to_index(df, ix)
 
-    else:
-        ix = index.open_dir(index_dir)
+    elif parser_args.mode == 'search':
+        ix = index.open_dir(parser_args.index_dir)
 
         og = qparser.OrGroup.factory(0.9)
         qp = QueryParser("lemmatizedReview", schema=ix.schema, group=og)
 
-        phrases_to_query = ['sound quality', 'volume control', 'volume level']
+        phrases_to_query = ['sound quality', 'volume control', 'bass response']
         results = search_for(ix, qp, phrases_to_query, result_limit=20)
 
         lemmatizer = WordNetLemmatizer()
