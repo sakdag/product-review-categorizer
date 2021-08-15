@@ -137,9 +137,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project related
-src/data/*
-
 # Exception to the rule
-!src/data/.gitkeep
-/src/index/
+!data/processed/.gitkeep
