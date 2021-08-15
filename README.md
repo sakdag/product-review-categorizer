@@ -81,7 +81,7 @@ and it is sometimes better to use headers instead of query parameters.
 
 Following flow diagram describes the overall flow of the Product Review Categorizer:
 
-<img src="./resources/overall_flow.png" width="250" alt="Overall Flow">
+<img src="./resources/overall_flow.png" width="500" alt="Overall Flow">
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
